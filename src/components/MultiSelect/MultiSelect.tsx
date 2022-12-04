@@ -1,28 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './select.module.css';
 
-export interface SelectOption {
+interface MultiSelectOption {
     value: string | number
     label: string
 }
 
-interface SingleSelectProps {
-    multiple?: false
-    value?: SelectOption
-    onChange: (value: SelectOption | undefined) => void
-}
-
-interface MultipleSelectProps {
-    multiple: true
-    value: SelectOption[]
-    onChange: (value: SelectOption[]) => void
-}
-
 type SelectProps = {
-    options: SelectOption[]
-} & (SingleSelectProps | MultipleSelectProps)
+    value: MultiSelectOption[]
+    options: MultiSelectOption[]
+    onChange: (value: MultiSelectOption[]) => void
+}
 
-const Select: React.FC<SelectProps> = ({ multiple, value, onChange, options }) => {
+const MultiSelect: React.FC<SelectProps> = ({ value, onChange, options }) => {
 
     const [isOpen, setIsOpen] = useState(false)
     const [highlightedIndex, setHighlightedIndex] = useState(0)
@@ -30,26 +20,21 @@ const Select: React.FC<SelectProps> = ({ multiple, value, onChange, options }) =
 
     const clearOptions = (evt: React.MouseEvent<HTMLButtonElement>) => {
         evt.stopPropagation()
-        multiple ? onChange([]) : onChange(undefined)
+        onChange([])
     }
 
-    const selectOption = (option: SelectOption, evt?: React.MouseEvent<HTMLLIElement | HTMLButtonElement>) => {
+    const selectOption = (option: MultiSelectOption, evt?: React.MouseEvent<HTMLLIElement | HTMLButtonElement>) => {
         evt?.stopPropagation()
-        if (multiple) {
-            if (value?.includes(option)) {
-                onChange(value.filter(opt => opt.value !== option.value))
-            } else {
-                onChange([...value, option])
-            }
+        if (value?.includes(option)) {
+            onChange(value.filter(opt => opt.value !== option.value))
         } else {
-            if (option.value === value?.value) return
-            onChange(option)
+            onChange([...value, option])
         }
         setIsOpen(false)
     }
 
-    const isOptionSelected = (option: SelectOption) => {
-        return multiple ? value?.includes(option) : option === value
+    const isOptionSelected = (option: MultiSelectOption) => {
+        return value?.includes(option)
     }
 
     useEffect(() => {
@@ -67,7 +52,7 @@ const Select: React.FC<SelectProps> = ({ multiple, value, onChange, options }) =
                     break
                 case "ArrowUp":
                 case "ArrowDown": {
-                    if (!open) {
+                    if (!isOpen) {
                         setIsOpen(true)
                         break
                     }
@@ -96,18 +81,20 @@ const Select: React.FC<SelectProps> = ({ multiple, value, onChange, options }) =
             onBlur={() => setIsOpen(false)}
             onClick={() => setIsOpen(prev => !prev)}
         >
-            <span className={styles.value}>{multiple ? value?.map(v => (
-                <button
-                    key={v.value}
-                    className={styles["option-badge"]}
-                    onClick={evt => selectOption(v, evt)}
-                >
-                    {v.label}
-                    <span className={styles["remove-btn"]}>
-                        &times;
-                    </span>
-                </button>
-            )) : value?.label}</span>
+            <span className={styles.value}>
+                {value?.map(v => (
+                    <button
+                        key={v.value}
+                        className={styles["option-badge"]}
+                        onClick={evt => selectOption(v, evt)}
+                    >
+                        {v.label}
+                        <span className={styles["remove-btn"]}>
+                            &times;
+                        </span>
+                    </button>
+                ))}
+            </span>
             <button
                 className={styles["clear-btn"]}
                 onClick={evt => clearOptions(evt)}
@@ -136,4 +123,4 @@ const Select: React.FC<SelectProps> = ({ multiple, value, onChange, options }) =
     );
 };
 
-export default Select;
+export default MultiSelect;
